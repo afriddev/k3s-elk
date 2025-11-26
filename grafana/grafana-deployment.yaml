@@ -21,8 +21,6 @@ spec:
           value: admin
         - name: GF_SECURITY_ADMIN_PASSWORD
           value: admin
-        - name: GF_INSTALL_PLUGINS
-          value: grafana-elasticsearch-datasource
         ports:
         - containerPort: 3000
           name: http
