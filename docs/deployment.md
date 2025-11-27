@@ -404,7 +404,7 @@ kubectl scale deployment kibana --replicas=1 -n k3s-elk
 ## Related Documentation
 
 - `[README.md]` - Project overview and quick start
-- `[docs/ELASTICSEARCH.md]` - Elasticsearch component details
-- `[docs/SCALING.md]` - Scaling procedures
-- `[docs/STORAGE.md]` - Storage configuration
-- `[docs/USAGE.md]` - Usage examples and integration
+- [elasticsearch.md](elasticsearch.md) - Elasticsearch component details
+- [scaling.md](scaling.md) - Scaling procedures
+- [storage.md](storage.md) - Storage configuration
+- [usage.md](usage.md) - Usage examples and integration

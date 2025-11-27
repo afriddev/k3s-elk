@@ -615,8 +615,8 @@ Reduce retention period for old logs.
 
 ## Related Documentation
 
-- `[docs/DEPLOYMENT.md]` - Initial setup procedures
-- `[docs/ELASTICSEARCH.md]` - Elasticsearch component details
-- `[docs/SCALING.md]` - Scaling for higher load
-- `[docs/STORAGE.md]` - Storage configuration
+- [deployment.md](deployment.md) - Initial setup procedures
+- [elasticsearch.md](elasticsearch.md) - Elasticsearch component details
+- [scaling.md](scaling.md) - Scaling for higher load
+- [storage.md](storage.md) - Storage configuration
 - `[README.md]` - Project overview

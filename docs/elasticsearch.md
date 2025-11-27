@@ -242,7 +242,7 @@ curl -XPUT http://<node-ip>:30920/_snapshot/my_backup -H 'Content-Type: applicat
 
 ## Related Documentation
 
-- `[docs/SCALING.md]` - Elasticsearch scaling procedures
-- `[docs/STORAGE.md]` - Persistent storage configuration
-- `[docs/DEPLOYMENT.md]` - Complete deployment guide
+- [scaling.md](scaling.md) - Elasticsearch scaling procedures
+- [storage.md](storage.md) - Persistent storage configuration
+- [deployment.md](deployment.md) - Complete deployment guide
 - `[README.md]` - Project overview

@@ -438,7 +438,7 @@ kubectl exec -n k3s-elk elasticsearch-0 -- curl -XDELETE http://localhost:9200/l
 
 ## Related Documentation
 
-- `[docs/DEPLOYMENT.md]` - Deployment procedures
-- `[docs/SCALING.md]` - Scaling operations that affect storage
-- `[docs/ELASTICSEARCH.md]` - Elasticsearch component details
+- [deployment.md](deployment.md) - Deployment procedures
+- [scaling.md](scaling.md) - Scaling operations that affect storage
+- [elasticsearch.md](elasticsearch.md) - Elasticsearch component details
 - `[README.md]` - Project overview
