@@ -619,4 +619,4 @@ Reduce retention period for old logs.
 - [elasticsearch.md](elasticsearch.md) - Elasticsearch component details
 - [scaling.md](scaling.md) - Scaling for higher load
 - [storage.md](storage.md) - Storage configuration
-- `[README.md]` - Project overview
+- [readme.md](readme.md) - Project overview

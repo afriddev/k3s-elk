@@ -457,4 +457,4 @@ Common delays:
 - [deployment.md](deployment.md) - Initial deployment procedures
 - [storage.md](storage.md) - Storage configuration details
 - [elasticsearch.md](elasticsearch.md) - Elasticsearch component documentation
-- `[README.md]` - Project overview
+- [readme.md](readme.md) - Project overview
