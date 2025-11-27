@@ -48,17 +48,24 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "200m"
+        startupProbe:
+          tcpSocket:
+            port: 5044
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
         livenessProbe:
           tcpSocket:
             port: 5044
-          initialDelaySeconds: 120
+          initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
           tcpSocket:
             port: 5044
-          initialDelaySeconds: 90
+          initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
