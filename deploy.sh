@@ -12,6 +12,8 @@ kubectl apply -f namespace/
 echo ""
 echo "[2/7] Creating storage resources..."
 kubectl apply -f storage/elasticsearch-storageclass.yaml
+kubectl apply -f storage/logstash-storageclass.yaml
+kubectl apply -f storage/kibana-storageclass.yaml
 kubectl apply -f storage/pv/
 kubectl apply -f storage/pvc/
 

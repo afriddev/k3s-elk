@@ -70,7 +70,7 @@ spec:
   - metadata:
       name: logstash-data
     spec:
-      storageClassName: local-path
+      storageClassName: logstash-local-storage
       accessModes:
         - ReadWriteOnce
       resources:

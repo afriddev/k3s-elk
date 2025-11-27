@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: kibana-pv
+  name: elk-logstash-node-0-pv
   labels:
     type: local
-    component: kibana
+    component: logstash
+    node-id: "0"
 spec:
-  storageClassName: kibana-local-storage
+  storageClassName: logstash-local-storage
   capacity:
-    storage: 5Gi
+    storage: 10Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /mnt/ssd/kibana-data
-    type: DirectoryOrCreate
+    path: /mnt/ssd/logstash/node-0
