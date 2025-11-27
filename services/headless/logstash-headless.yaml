@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: elk-logstash-headless
+  namespace: k3s-elk
+  labels:
+    app: elk-logstash
+    component: logstash
+    service-type: headless
+spec:
+  clusterIP: None
+  selector:
+    app: elk-logstash
+  ports:
+    - name: beats
+      port: 5044
+      targetPort: 5044

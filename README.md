@@ -1,130 +1,113 @@
-## ELK Stack for K3s
+# ELK Stack for Kubernetes
 
-## Overview
+A production-ready, highly available ELK stack (Elasticsearch, Logstash, Kibana) deployment for Kubernetes (K3s). This project features a modular architecture, zero-downtime rolling updates, and comprehensive resource management suitable for both development and production environments.
 
-This repository contains a production-ready ELK stack for centralized logging on Kubernetes. The stack includes Elasticsearch for data storage, Logstash for log processing with high availability, and Kibana for visualization.
+----
 
-For metrics monitoring with Grafana and Prometheus, see the separate k3s-monitoring project.
+## 🚀 Quick Start
 
-## Documentation
-
-Detailed documentation is available in the docs folder
-
-- Deployment Guide in docs/README.md
-- Storage Configuration in docs/STORAGE.md
-
-## Quick Start
-
-#### Prerequisites
-
-Ensure k3s-elasticsearch is deployed and running
-
-```bash
-kubectl get pods -n k3s-elasticsearch
-```
-
-Check K3s status
-
-```bash
-systemctl status k3s
-```
-
-#### Setup Storage Directories
-
-Create the required storage directories on the host
-
+### 1. Setup Storage
+Initialize the required host directories for persistent storage.
 ```bash
 bash setup.sh
 ```
 
-This creates the following directories
-- /mnt/ssd/kibana-data for Kibana saved objects and dashboards
-
-Note that Logstash uses dynamic persistent volume provisioning via StatefulSet
-
-#### Deploy ELK Stack
-
-Run the automated deployment script
-
+### 2. Deploy Stack
+Deploy all components (Namespace, ConfigMaps, Storage, Services, StatefulSets, Deployments).
 ```bash
 bash deploy.sh
 ```
 
-#### Verification
-
-Check the health of your stack
-
-Check pods
-
+### 3. Verify Deployment
+Check the status of pods and services.
 ```bash
-kubectl get pods -n k3s-elk-stack
+kubectl get pods -n k3s-elk
 ```
 
-Check services
+----
 
+## 📚 Documentation
+
+Detailed documentation is available in the `docs/` directory.
+
+- **[Deployment Guide](docs/deployment.md)** - Step-by-step installation, prerequisites, and verification.
+- **[Elasticsearch Configuration](docs/elasticsearch.md)** - Deep dive into Elasticsearch settings, clustering, and maintenance.
+- **[Production Resources](docs/production-resources.md)** - Resource planning, capacity sizing, and production tuning.
+- **[Storage Architecture](docs/storage.md)** - Persistent storage details, backup/restore procedures.
+- **[Scaling Guide](docs/scaling.md)** - Instructions for scaling Elasticsearch and Logstash replicas.
+- **[Usage Guide](docs/usage.md)** - Examples for sending logs, querying data, and using Kibana.
+
+----
+
+## 📂 Project Structure
+
+This project is organized into logical components, each with its own documentation.
+
+- **[configmaps/](configmaps/readme.md)** - Configuration files for Elasticsearch and Logstash pipelines.
+- **[deployments/](deployments/readme.md)** - Stateless application deployments (Kibana).
+- **[services/](services/readme.md)** - Network services organized by type (Headless & NodePort).
+- **[statefulsets/](statefulsets/readme.md)** - Stateful applications (Elasticsearch & Logstash).
+- **[storage/](storage/readme.md)** - Persistent Volume definitions and Storage Classes.
+
+----
+
+## 🔌 Access Points
+
+| Component | External Access (NodePort) | Internal Cluster DNS |
+|-----------|----------------------------|----------------------|
+| **Elasticsearch** | `http://<node-ip>:30920` | `elk-elasticsearch-headless.k3s-elk` |
+| **Kibana** | `http://<node-ip>:30561` | `elk-kibana-nodeport.k3s-elk` |
+| **Logstash** | `<node-ip>:30044` | `elk-logstash-headless.k3s-elk` |
+
+----
+
+## ⚙️ Configuration & Resources
+
+### Development (Default)
+Optimized for low-resource environments (e.g., local testing).
+- **Elasticsearch**: 1 Replica, 1Gi RAM, 20Gi Storage
+- **Logstash**: 1 Replica, 512Mi RAM, 10Gi Storage
+- **Kibana**: 1 Replica, 512Mi RAM, 5Gi Storage
+
+### Production
+Ready for high availability and volume.
+- **Elasticsearch**: 3+ Replicas, 4Gi+ RAM, 100Gi+ Storage
+- **Logstash**: 2+ Replicas, 2Gi+ RAM
+- **Update Strategy**: Rolling Updates with Zero Downtime
+
+See **[Production Resources](docs/production-resources.md)** for upgrade instructions.
+
+----
+
+## 🛠️ Operations
+
+### Scaling
+Scale components easily using kubectl.
 ```bash
-kubectl get svc -n k3s-elk-stack
+# Scale Elasticsearch to 3 nodes
+kubectl scale statefulset elk-elasticsearch --replicas=3 -n k3s-elk
 ```
 
-Check StatefulSet status
-
+### Updates
+Perform zero-downtime updates.
 ```bash
-kubectl get statefulset -n k3s-elk-stack
+# Update Image
+kubectl set image statefulset/elk-elasticsearch elasticsearch=docker.elastic.co/elasticsearch/elasticsearch:8.11.0 -n k3s-elk
 ```
 
-## Project Structure
+----
 
-- storage for persistent volume and claim definitions
-- logstash for Logstash configuration StatefulSet and services
-  - logstash-config.yaml for pipeline configuration
-  - logstash-statefulset.yaml for StatefulSet definition
-  - logstash-service-headless.yaml for headless service
-  - logstash-service.yaml for NodePort service
-- kibana for Kibana deployment and service
-  - kibana-deployment.yaml for Deployment definition
-  - kibana-service.yaml for NodePort service
-- namespace for namespace definition
-- docs for detailed documentation
-- setup.sh script to create host storage directories
-- deploy.sh script to apply Kubernetes manifests
+## 🧹 Cleanup
 
-## Access Points
-
-- Kibana at http://node-ip:30561
-- Logstash external at http://node-ip:30044 for log ingestion from outside cluster
-- Logstash internal at logstash.k3s-elk-stack:5044 for in-cluster applications
-- Elasticsearch at http://k3s-elasticsearch-0.k3s-elasticsearch-headless.k3s-elasticsearch.svc.cluster.local:9200
-
-## Architecture
-
-#### Logstash High Availability
-
-Logstash runs as a StatefulSet with 2 replicas for high availability
-
-- Each pod has its own persistent storage via volumeClaimTemplates
-- Headless service enables direct pod access
-- Load balancer service distributes traffic across replicas
-- Ensures continuous log collection even during pod failures
-
-#### Kibana
-
-Kibana runs as a single Deployment
-
-- Uses persistent storage for saved objects and dashboards
-- No HA needed as it is stateless UI layer
-
-## Usage
-
-Send logs to Logstash on port 5044 and they will be stored in Elasticsearch and visualized in Kibana
-
-Example using Filebeat
-
+To remove the entire stack and data:
 ```bash
-output.logstash:
-  hosts: ["logstash-lb.k3s-elk-stack:5044"]
-  loadbalance: true
+kubectl delete namespace k3s-elk
+# Warning: This deletes persistent data
+sudo rm -rf /mnt/ssd/elasticsearch /mnt/ssd/kibana-data
 ```
 
-## Support
+----
 
-For detailed configuration and troubleshooting, refer to the documentation in the docs directory
+## 🆘 Support
+
+For additional help, refer to the [docs/](docs/readme.md) directory or the official [Elastic Stack Documentation](https://www.elastic.co/guide/index.html).

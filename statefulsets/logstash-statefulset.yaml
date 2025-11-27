@@ -1,25 +1,34 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: logstash
-  namespace: k3s-elk-stack
+  name: elk-logstash
+  namespace: k3s-elk
+  labels:
+    app: elk-logstash
+    component: logstash
 spec:
-  serviceName: logstash-headless
+  serviceName: elk-logstash-headless
   replicas: 1
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
   selector:
     matchLabels:
-      app: logstash
+      app: elk-logstash
   template:
     metadata:
       labels:
-        app: logstash
+        app: elk-logstash
+        component: logstash
     spec:
       containers:
       - name: logstash
         image: docker.elastic.co/logstash/logstash:8.10.2
         env:
         - name: LS_JAVA_OPTS
-          value: "-Xms512m -Xmx512m"
+          value: "-Xms256m -Xmx256m"
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -35,14 +44,28 @@ spec:
         resources:
           requests:
             memory: "512Mi"
-            cpu: "200m"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          tcpSocket:
+            port: 5044
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 5044
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
       volumes:
       - name: pipeline
         configMap:
-          name: logstash-pipeline
+          name: elk-logstash-pipeline
   volumeClaimTemplates:
   - metadata:
       name: logstash-data

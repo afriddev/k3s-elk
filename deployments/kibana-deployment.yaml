@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elk-kibana
+  namespace: k3s-elk
+  labels:
+    app: elk-kibana
+    component: kibana
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: elk-kibana
+  template:
+    metadata:
+      labels:
+        app: elk-kibana
+        component: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:8.10.2
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://elk-elasticsearch-0.elk-elasticsearch-headless.k3s-elk.svc.cluster.local:9200"
+        - name: SERVER_NAME
+          value: "elk-kibana"
+        - name: SERVER_HOST
+          value: "0.0.0.0"
+        ports:
+        - containerPort: 5601
+          name: http
+        volumeMounts:
+        - name: kibana-data
+          mountPath: /usr/share/kibana/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/status
+            port: 5601
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/status
+            port: 5601
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: kibana-data
+        persistentVolumeClaim:
+          claimName: elk-kibana-pvc
