@@ -24,7 +24,7 @@ When scaling Elasticsearch from 1 to 3 nodes, the cluster transitions from singl
 
 #### Create Additional Persistent Volumes
 
-Create file `[storage/elasticsearch-pv-node-1.yaml]`:
+Create file `storage/pv/elasticsearch-node-1-pv.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -45,7 +45,7 @@ spec:
     path: /mnt/ssd/elasticsearch/node-1
 ```
 
-Create file `[storage/elasticsearch-pv-node-2.yaml]`:
+Create file `storage/pv/elasticsearch-node-2-pv.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -68,7 +68,7 @@ spec:
 
 #### Create Storage Directories
 
-Add to `[setup.sh]` script before running:
+Add to `setup.sh` script before running:
 
 ```bash
 mkdir -p /host/mnt/ssd/elasticsearch/node-1
@@ -78,7 +78,7 @@ chown -R 1000:1000 /host/mnt/ssd/elasticsearch
 
 #### Update Elasticsearch Configuration
 
-Edit `[elasticsearch/elasticsearch-config.yaml]`:
+Edit `configmaps/elasticsearch-config.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -98,11 +98,11 @@ data:
     path.logs: /usr/share/elasticsearch/logs
 ```
 
-Remove discovery.type from environment variables in `[elasticsearch/elasticsearch-statefulset.yaml]`.
+Remove discovery.type from environment variables in `statefulsets/elasticsearch-statefulset.yaml`.
 
 #### Update Replica Count
 
-Edit `[elasticsearch/elasticsearch-statefulset.yaml]`:
+Edit `statefulsets/elasticsearch-statefulset.yaml`:
 
 ```yaml
 spec:
@@ -112,10 +112,10 @@ spec:
 #### Apply Changes
 
 ```bash
-kubectl apply -f storage/elasticsearch-pv-node-1.yaml
-kubectl apply -f storage/elasticsearch-pv-node-2.yaml
-kubectl apply -f elasticsearch/elasticsearch-config.yaml
-kubectl apply -f elasticsearch/elasticsearch-statefulset.yaml
+kubectl apply -f storage/pv/elasticsearch-node-1-pv.yaml
+kubectl apply -f storage/pv/elasticsearch-node-2-pv.yaml
+kubectl apply -f configmaps/elasticsearch-config.yaml
+kubectl apply -f statefulsets/elasticsearch-statefulset.yaml
 ```
 
 #### Verify Cluster Formation
@@ -164,7 +164,7 @@ kubectl scale statefulset logstash --replicas=3 -n k3s-elk
 
 #### Using Configuration File
 
-Edit `[logstash/logstash-statefulset.yaml]`:
+Edit `statefulsets/logstash-statefulset.yaml`:
 
 ```yaml
 spec:
@@ -174,10 +174,10 @@ spec:
 Apply changes:
 
 ```bash
-kubectl apply -f logstash/logstash-statefulset.yaml
+kubectl apply -f statefulsets/logstash-statefulset.yaml
 ```
 
-Update `[deploy.sh]` wait condition:
+Update `deploy.sh` wait condition:
 
 ```bash
 kubectl wait statefulset/logstash \

@@ -44,10 +44,10 @@ Elasticsearch serves as the core data storage and search engine for the ELK stac
 ## Files Reference
 
 #### Configuration Files
-- `[elasticsearch/elasticsearch-config.yaml]` - ConfigMap with elasticsearch.yml configuration
-- `[elasticsearch/elasticsearch-statefulset.yaml]` - StatefulSet definition with resource limits
-- `[elasticsearch/elasticsearch-service-headless.yaml]` - Headless service for cluster communication
-- `[elasticsearch/elasticsearch-service-nodeport.yaml]` - NodePort service for external access
+- `configmaps/elasticsearch-config.yaml` - ConfigMap with elasticsearch.yml configuration
+- `statefulsets/elasticsearch-statefulset.yaml` - StatefulSet definition with resource limits
+- `services/headless/elasticsearch-headless.yaml` - Headless service for cluster communication
+- `services/nodeport/elasticsearch-nodeport.yaml` - NodePort service for external access
 
 #### Storage Files
 - `[storage/elasticsearch-storage-class.yaml]` - StorageClass configuration

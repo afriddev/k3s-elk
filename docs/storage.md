@@ -90,20 +90,20 @@ Data stored includes:
 
 #### Elasticsearch Storage
 
-- `[storage/elasticsearch-storage-class.yaml]` - StorageClass with Retain policy
-- `[storage/elasticsearch-pv-node-0.yaml]` - PersistentVolume for first node
-- `[elasticsearch/elasticsearch-statefulset.yaml]` - Contains volumeClaimTemplates
+- `storage/elasticsearch-storageclass.yaml` - StorageClass with Retain policy
+- `storage/pv/elasticsearch-node-0-pv.yaml` - PersistentVolume for first node
+- `statefulsets/elasticsearch-statefulset.yaml` - Contains volumeClaimTemplates
 
 #### Logstash Storage
 
 - Uses default local-path StorageClass from k3s
 - No explicit PV files needed
-- `[logstash/logstash-statefulset.yaml]` - Contains volumeClaimTemplates
+- `statefulsets/logstash-statefulset.yaml` - Contains volumeClaimTemplates
 
 #### Kibana Storage
 
-- `[storage/kibana-pv.yaml]` - PersistentVolume definition
-- `[storage/kibana-pvc.yaml]` - PersistentVolumeClaim definition
+- `storage/pv/kibana-pv.yaml` - PersistentVolume definition
+- `storage/pvc/kibana-pvc.yaml` - PersistentVolumeClaim definition
 
 ----
 
@@ -111,7 +111,7 @@ Data stored includes:
 
 #### Host Directory Creation
 
-The `[setup.sh]` script creates required directories:
+The `setup.sh` script creates required directories:
 
 ```bash
 /mnt/ssd/
@@ -139,7 +139,7 @@ chmod -R 777 /mnt/ssd/kibana-data
 
 #### Storage Deployment
 
-The `[deploy.sh]` script applies storage manifests in this order:
+The `deploy.sh` script applies storage manifests in this order:
 
 - StorageClass resources
 - PersistentVolume resources
@@ -320,7 +320,7 @@ Cannot expand StatefulSet PVCs without recreation. Process:
 - Delete StatefulSet (keep PVCs): kubectl delete statefulset elasticsearch -n k3s-elk --cascade=orphan
 - Delete PVCs: kubectl delete pvc data-elasticsearch-0 -n k3s-elk
 - Edit StatefulSet volumeClaimTemplates to new size
-- Recreate StatefulSet: kubectl apply -f elasticsearch/elasticsearch-statefulset.yaml
+- Recreate StatefulSet: kubectl apply -f statefulsets/elasticsearch-statefulset.yaml
 - Restore data if necessary
 
 #### Kibana Volume Expansion

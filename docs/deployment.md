@@ -143,7 +143,7 @@ Replace node-ip with your Kubernetes node IP address.
 
 #### Elasticsearch Configuration
 
-Configuration file: `[elasticsearch/elasticsearch-config.yaml]`
+Configuration file: `configmaps/elasticsearch-config.yaml`
 
 Key settings:
 
@@ -154,7 +154,7 @@ Key settings:
 
 #### Logstash Configuration
 
-Configuration file: `[logstash/logstash-config.yaml]`
+Configuration file: `configmaps/logstash-pipeline.yaml`
 
 Pipeline configuration:
 
@@ -164,7 +164,7 @@ Pipeline configuration:
 
 #### Kibana Configuration
 
-Environment variables in `[kibana/kibana-deployment.yaml]`:
+Environment variables in `deployments/kibana-deployment.yaml`:
 
 - ELASTICSEARCH_HOSTS: Points to elasticsearch-0.elasticsearch-headless.k3s-elk.svc.cluster.local:9200
 - SERVER_HOST: 0.0.0.0
@@ -363,14 +363,14 @@ kubectl exec -n k3s-elk deployment/kibana -- curl http://localhost:5601/api/stat
 
 #### Modify Elasticsearch Configuration
 
-- Edit `[elasticsearch/elasticsearch-config.yaml]`
-- Apply changes: kubectl apply -f elasticsearch/elasticsearch-config.yaml
+- Edit `configmaps/elasticsearch-config.yaml`
+- Apply changes: kubectl apply -f configmaps/elasticsearch-config.yaml
 - Restart pods: kubectl rollout restart statefulset/elasticsearch -n k3s-elk
 
 #### Modify Logstash Pipeline
 
-- Edit `[logstash/logstash-config.yaml]`
-- Apply changes: kubectl apply -f logstash/logstash-config.yaml
+- Edit `configmaps/logstash-pipeline.yaml`
+- Apply changes: kubectl apply -f configmaps/logstash-pipeline.yaml
 - Restart pods: kubectl rollout restart statefulset/logstash -n k3s-elk
 
 #### Modify Resource Limits
