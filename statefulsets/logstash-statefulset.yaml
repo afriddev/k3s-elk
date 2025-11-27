@@ -28,7 +28,7 @@ spec:
         image: docker.elastic.co/logstash/logstash:8.10.2
         env:
         - name: LS_JAVA_OPTS
-          value: "-Xms256m -Xmx256m"
+          value: "-Xms512m -Xmx512m"
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -43,22 +43,22 @@ spec:
           mountPath: /usr/share/logstash/data
         resources:
           requests:
-            memory: "512Mi"
+            memory: "1Gi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "1Gi"
             cpu: "200m"
         livenessProbe:
           tcpSocket:
             port: 5044
-          initialDelaySeconds: 60
+          initialDelaySeconds: 120
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
           tcpSocket:
             port: 5044
-          initialDelaySeconds: 30
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
