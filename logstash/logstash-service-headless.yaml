@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash-headless
+  namespace: k3s-elk-stack
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: logstash
+  ports:
+  - port: 5044
+    targetPort: 5044
+    name: beats

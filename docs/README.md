@@ -1,49 +1,70 @@
-# ELK Stack with Grafana on Kubernetes
+## ELK Stack Deployment Guide
 
 ## Overview
 
-This project provides a production-ready ELK (Elasticsearch, Logstash, Kibana) Stack with Grafana for centralized logging and visualization on Kubernetes (K3s). It connects to the separately deployed k3s-elasticsearch cluster for data persistence.
+This project provides a production-ready ELK stack for centralized logging on Kubernetes. The system includes Logstash with high availability, Kibana for visualization, and integrates with k3s-elasticsearch for data persistence.
 
 ## Components
 
-- Logstash 8.10.2 for log ingestion and processing
+- Logstash 8.10.2 for log ingestion and processing with HA
 - Kibana 8.10.2 for log exploration and visualization
-- Grafana 10.4.2 for advanced dashboards and alerting
 - Integration with k3s-elasticsearch for data storage
 
 ## Prerequisites
 
 #### k3s-elasticsearch Cluster
-The k3s-elasticsearch cluster must be deployed and running before deploying this stack.
 
-Verify it is running:
+The k3s-elasticsearch cluster must be deployed and running before deploying this stack
+
+Verify it is running
+
 ```bash
 kubectl get pods -n k3s-elasticsearch
 kubectl exec -n k3s-elasticsearch k3s-elasticsearch-0 -- curl -XGET http://localhost:9200/_cluster/health
 ```
 
-#### Kubernetes Cluster
-- K3s or any Kubernetes cluster (v1.24+)
+#### Kubernetes Cluster Requirements
+
+- K3s or any Kubernetes cluster version 1.24 or higher
 - kubectl configured with cluster access
-- Node with at least 4GB RAM, 2 vCPUs
+- Node with at least 4GB RAM and 2 vCPUs
+- Host storage at /mnt/ssd for persistent data
 
 #### Software Requirements
+
 - kubectl CLI tool
+- bash shell for running deployment scripts
 
 ## Architecture
 
 #### Namespace
-All components deploy to the k3s-elk-stack namespace.
+
+All components deploy to the k3s-elk-stack namespace
 
 #### Data Flow
-1. Applications send JSON logs to Logstash on port 5044
-2. Logstash processes and forwards logs to k3s-elasticsearch
-3. Kibana and Grafana query k3s-elasticsearch for visualization
+
+The logging pipeline works as follows
+
+- Applications send JSON logs to Logstash on port 5044
+- Logstash processes and forwards logs to k3s-elasticsearch
+- Kibana queries k3s-elasticsearch for visualization
 
 #### Services
-- Logstash: Internal ClusterIP on port 5044
-- Kibana: NodePort on port 30561
-- Grafana: NodePort on port 30300
+
+Service endpoints
+
+- Logstash headless service for pod identity
+- Logstash load balancer service on port 5044 for log ingestion
+- Kibana NodePort on port 30561 for web UI access
+
+#### High Availability
+
+Logstash runs as StatefulSet with 2 replicas
+
+- Each pod has independent persistent storage
+- Load balancer distributes incoming log traffic
+- Ensures continuous log collection during pod failures
+- Automatic pod recovery maintains replica count
 
 ## Directory Structure
 
@@ -51,175 +72,371 @@ All components deploy to the k3s-elk-stack namespace.
 k3s-elk-stack/
 ├── namespace/
 │   └── namespace.yaml
+├── storage/
+│   ├── kibana-pv.yaml
+│   └── kibana-pvc.yaml
 ├── logstash/
 │   ├── logstash-config.yaml
-│   └── logstash-deployment.yaml
+│   └── logstash-statefulset.yaml
 ├── kibana/
 │   └── kibana-deployment.yaml
-├── grafana/
-│   └── grafana-deployment.yaml
+├── setup.sh
 ├── deploy.sh
 └── docs/
     ├── README.md
-    └── GRAFANA.md
+    └── STORAGE.md
 ```
 
 ## Installation
 
+#### Setup Storage
+
+Create required storage directories on the host
+
+```bash
+bash setup.sh
+```
+
+This creates /mnt/ssd/kibana-data for persistent storage
+
+Logstash storage is created automatically by StatefulSet
+
 #### Deploy ELK Stack
 
-Run the automated deployment script:
+Run the automated deployment script
 
 ```bash
 bash deploy.sh
 ```
 
+The script performs the following steps
+
+- Creates k3s-elk-stack namespace
+- Creates persistent volumes and claims
+- Deploys Logstash StatefulSet with 2 replicas
+- Deploys Kibana Deployment
+- Waits for all pods to be ready
+
 #### Verify Deployment
+
+Check pod status
 
 ```bash
 kubectl get pods -n k3s-elk-stack
+```
+
+Expected output shows 2 Logstash pods and 1 Kibana pod running
+
+```
+NAME         READY   STATUS    RESTARTS   AGE
+logstash-0   1/1     Running   0          2m
+logstash-1   1/1     Running   0          2m
+kibana-xxx   1/1     Running   0          2m
+```
+
+Check services
+
+```bash
 kubectl get svc -n k3s-elk-stack
+```
+
+Check StatefulSet status
+
+```bash
+kubectl get statefulset -n k3s-elk-stack
+```
+
+Check persistent volumes
+
+```bash
+kubectl get pv
+kubectl get pvc -n k3s-elk-stack
 ```
 
 ## Configuration
 
 #### Logstash
 
-Logstash is configured to:
+Logstash is configured to
+
 - Accept JSON logs on TCP port 5044
-- Parse JSON messages
-- Forward to k3s-elasticsearch with daily indices (logs-YYYY.MM.dd)
+- Parse JSON messages automatically
+- Forward to k3s-elasticsearch with daily indices in format logs-YYYY.MM.dd
+- Run with 512MB to 1GB memory allocation
+- Use persistent queue for data durability
+
+Configuration file location
+
+- Pipeline config in logstash/logstash-config.yaml
+- StatefulSet definition in logstash/logstash-statefulset.yaml
 
 #### Kibana
 
-Kibana is pre-configured to connect to k3s-elasticsearch. Access it at:
-```
-http://<node-ip>:30561
-```
+Kibana is pre-configured to connect to k3s-elasticsearch
 
-#### Grafana
+Default settings
 
-Grafana runs with default credentials. Access it at:
-```
-http://<node-ip>:30300
-Username: admin
-Password: admin
-```
-
-See GRAFANA.md for data source configuration.
+- Single replica deployment
+- Memory allocation of 512MB to 1GB
+- Persistent storage for saved objects
+- Readiness probe on /api/status endpoint
 
 ## Accessing Services
 
 #### Kibana
 
-External access via NodePort:
+Access Kibana web interface via NodePort
+
 ```
-http://<node-ip>:30561
+http://node-ip:30561
 ```
 
-#### Grafana
+Replace node-ip with your k3s node IP address
 
-External access via NodePort:
+Initial setup steps
+
+- Go to Management then Index Patterns
+- Create index pattern matching logs-*
+- Select @timestamp as time field
+- Navigate to Discover to view logs
+
+#### Logstash
+
+Internal access from within the cluster
+
+Using load balancer service for log ingestion
+
 ```
-http://<node-ip>:30300
+logstash-lb.k3s-elk-stack.svc.cluster.local:5044
 ```
 
-#### Logstash (from applications)
+For external applications configure your log shipper with this endpoint
 
-Internal access from within the cluster:
-```
-logstash.k3s-elk-stack.svc.cluster.local:5044
+Example Filebeat configuration
+
+```yaml
+output.logstash:
+  hosts: ["logstash-lb.k3s-elk-stack:5044"]
+  loadbalance: true
 ```
 
 ## Testing
 
 #### Send Test Log
 
-From within the cluster:
+From within the cluster send a test message
 
 ```bash
-kubectl run test-logger --rm -it --image=busybox -- sh -c "echo '{\"message\":\"Test log entry\",\"level\":\"info\",\"timestamp\":\"2024-01-01T00:00:00Z\"}' | nc logstash.k3s-elk-stack 5044"
+kubectl run test-logger --rm -it --image=busybox -- sh -c "echo '{\"message\":\"Test log entry\",\"level\":\"info\",\"timestamp\":\"2024-01-01T00:00:00Z\"}' | nc logstash-lb.k3s-elk-stack 5044"
 ```
 
 #### Verify in Kibana
 
-1. Open Kibana at `http://<node-ip>:30561`
-2. Go to Management → Index Patterns
-3. Create index pattern: `logs-*`
-4. Go to Discover to view logs
+Steps to verify log ingestion
+
+- Open Kibana at http://node-ip:30561
+- Go to Management then Stack Management then Index Patterns
+- Create index pattern named logs-*
+- Go to Discover to view logs
+- Search for your test message
 
 #### Verify in Elasticsearch
+
+Check indices directly in Elasticsearch
 
 ```bash
 kubectl exec -n k3s-elasticsearch k3s-elasticsearch-0 -- curl -XGET http://localhost:9200/_cat/indices?v
 ```
 
-You should see indices like `logs-2024.01.01`.
+You should see indices like logs-2024.01.01 or current date
+
+Query for recent logs
+
+```bash
+kubectl exec -n k3s-elasticsearch k3s-elasticsearch-0 -- curl -XGET http://localhost:9200/logs-*/_search?pretty
+```
 
 ## Monitoring
 
 #### Check Logstash Status
 
+View logs from both Logstash pods
+
 ```bash
-kubectl logs -n k3s-elk-stack deployment/logstash
+kubectl logs -n k3s-elk-stack logstash-0
+kubectl logs -n k3s-elk-stack logstash-1
+```
+
+Follow logs in real-time
+
+```bash
+kubectl logs -n k3s-elk-stack logstash-0 -f
 ```
 
 #### Check Kibana Status
+
+View Kibana pod logs
 
 ```bash
 kubectl logs -n k3s-elk-stack deployment/kibana
 ```
 
-#### Check Grafana Status
+Check Kibana API health
 
 ```bash
-kubectl logs -n k3s-elk-stack deployment/grafana
+kubectl exec -n k3s-elk-stack deployment/kibana -- curl -s http://localhost:5601/api/status
+```
+
+#### Check Persistent Storage
+
+Verify PVC binding status
+
+```bash
+kubectl get pvc -n k3s-elk-stack
+```
+
+Check storage usage
+
+```bash
+kubectl exec -n k3s-elk-stack logstash-0 -- df -h /usr/share/logstash/data
+kubectl exec -n k3s-elk-stack deployment/kibana -- df -h /usr/share/kibana/data
 ```
 
 ## Troubleshooting
 
 #### Pods Not Starting
 
-Check events and logs:
+Check pod events and logs
+
 ```bash
-kubectl describe pod <pod-name> -n k3s-elk-stack
-kubectl logs <pod-name> -n k3s-elk-stack
+kubectl describe pod pod-name -n k3s-elk-stack
+kubectl logs pod-name -n k3s-elk-stack
 ```
+
+Common issues
+
+- PVC not bound check PV and PVC status
+- Image pull errors verify image name and registry access
+- Resource constraints check node capacity
+- Host path permissions verify /mnt/ssd permissions
 
 #### Cannot Connect to Elasticsearch
 
-Verify k3s-elasticsearch is running:
+Verify k3s-elasticsearch is running
+
 ```bash
 kubectl get pods -n k3s-elasticsearch
 ```
 
-Test connectivity from ELK stack namespace:
+Test connectivity from ELK stack namespace
+
 ```bash
 kubectl run test-es --rm -it --image=curlimages/curl -n k3s-elk-stack -- curl http://k3s-elasticsearch-0.k3s-elasticsearch-headless.k3s-elasticsearch.svc.cluster.local:9200
 ```
 
-#### Logs Not Appearing
+Check Elasticsearch cluster health
 
-Check Logstash is receiving logs:
 ```bash
-kubectl logs -n k3s-elk-stack deployment/logstash --tail=50
+kubectl exec -n k3s-elasticsearch k3s-elasticsearch-0 -- curl -XGET http://localhost:9200/_cluster/health?pretty
 ```
 
-Check Elasticsearch indices:
+#### Logs Not Appearing
+
+Check Logstash is receiving and processing logs
+
+```bash
+kubectl logs -n k3s-elk-stack logstash-0 --tail=50
+kubectl logs -n k3s-elk-stack logstash-1 --tail=50
+```
+
+Check Elasticsearch indices
+
 ```bash
 kubectl exec -n k3s-elasticsearch k3s-elasticsearch-0 -- curl -XGET http://localhost:9200/_cat/indices?v
 ```
 
+Verify Logstash output configuration
+
+```bash
+kubectl get configmap logstash-pipeline -n k3s-elk-stack -o yaml
+```
+
+#### StatefulSet Issues
+
+Check StatefulSet status
+
+```bash
+kubectl describe statefulset logstash -n k3s-elk-stack
+```
+
+Scale down and up to recover
+
+```bash
+kubectl scale statefulset logstash --replicas=0 -n k3s-elk-stack
+kubectl scale statefulset logstash --replicas=2 -n k3s-elk-stack
+```
+
+## Scaling
+
+#### Scale Logstash Replicas
+
+Increase or decrease Logstash replicas based on load
+
+```bash
+kubectl scale statefulset logstash --replicas=3 -n k3s-elk-stack
+```
+
+Each new pod gets its own persistent volume automatically
+
+Monitor scaling progress
+
+```bash
+kubectl get pods -n k3s-elk-stack -w
+```
+
+#### Considerations
+
+When scaling Logstash
+
+- Each replica needs 512MB to 1GB memory
+- Each replica gets 10Gi persistent storage
+- Load balancer distributes traffic automatically
+- Scale based on log ingestion rate and processing needs
+
+Do not scale Kibana as it is a stateless UI component and single replica is sufficient
+
 ## Cleanup
 
-Remove all ELK stack resources:
+Remove all ELK stack resources
 
 ```bash
 kubectl delete namespace k3s-elk-stack
 ```
 
-Note: This does not affect the k3s-elasticsearch cluster or its data.
+Remove persistent volumes if needed
 
-## License
+```bash
+kubectl delete pv kibana-data-pv
+kubectl delete pv logstash-data-pv
+```
 
-This project is part of the Hospital Information System deployment.
+Remove host directories if needed
+
+```bash
+sudo rm -rf /mnt/ssd/kibana-data
+```
+
+Note that this does not affect the k3s-elasticsearch cluster or its data
+
+## Related Documentation
+
+- Storage Configuration in docs/STORAGE.md
+- Main project README in README.md
+
+## Support
+
+For additional help
+
+- Check Elasticsearch documentation at elastic.co/guide
+- Review Logstash documentation at elastic.co/guide/en/logstash
+- Review Kibana documentation at elastic.co/guide/en/kibana
